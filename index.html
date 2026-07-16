@@ -257,6 +257,34 @@
         </aside>
     </main>
 
+    <!-- Export Dialog -->
+    <div id="export-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Export Views</h2>
+            <p class="modal-desc">Select which views to export. Each is a separate printable page.</p>
+            <div class="export-grid">
+                <div class="export-col">
+                    <h4>Front View</h4>
+                    <label class="cb-label"><input type="checkbox" data-view="front" data-stage="1" checked> Stage 1 — Block-in</label>
+                    <label class="cb-label"><input type="checkbox" data-view="front" data-stage="2" checked> Stage 2 — Rough-out</label>
+                    <label class="cb-label"><input type="checkbox" data-view="front" data-stage="3" checked> Stage 3 — Detail</label>
+                </div>
+                <div class="export-col">
+                    <h4>Side View</h4>
+                    <label class="cb-label"><input type="checkbox" data-view="side" data-stage="1" checked> Stage 1 — Block-in</label>
+                    <label class="cb-label"><input type="checkbox" data-view="side" data-stage="2" checked> Stage 2 — Rough-out</label>
+                    <label class="cb-label"><input type="checkbox" data-view="side" data-stage="3" checked> Stage 3 — Detail</label>
+                </div>
+            </div>
+            <div class="export-actions">
+                <button id="export-select-all" class="tool-btn">Select All</button>
+                <button id="export-download" class="tool-btn export-primary">Download SVGs</button>
+                <button id="export-print" class="tool-btn export-primary">Print Selected</button>
+                <button id="export-cancel" class="tool-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -14,13 +14,53 @@ export class SvgRenderer {
         const m = this.model;
         const b = m.svgBounds;
 
+        // Always render a clip path matching the log boundary.
+        // NOTHING can exceed this — you can't add wood.
+        this._updateClipPath(b);
+
         if (m.view === 'front') {
             const outline = FeatureLibrary.faceOutline(b, m.stage);
             this._path(layer, outline, 'face-outline');
         } else {
-            const profile = FeatureLibrary.sideProfile(b, m, m.stage);
-            this._path(layer, profile, 'face-outline');
+            const paths = FeatureLibrary.sideProfile(b, m, m.stage);
+            if (Array.isArray(paths)) {
+                this._path(layer, paths[0], 'face-outline');
+                if (paths[1]) {
+                    const cls = m.stage === 1 ? 'removal-area' : 'feature-path';
+                    this._path(layer, paths[1], cls);
+                }
+            } else {
+                this._path(layer, paths, 'face-outline');
+            }
         }
+    }
+
+    _updateClipPath(bounds) {
+        const svg = document.getElementById('tiki-canvas');
+        let defs = svg.querySelector('defs');
+        if (!defs) {
+            defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            svg.insertBefore(defs, svg.firstChild);
+        }
+
+        let clipPath = defs.querySelector('#log-clip');
+        if (!clipPath) {
+            clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+            clipPath.setAttribute('id', 'log-clip');
+            defs.appendChild(clipPath);
+        }
+        clipPath.innerHTML = '';
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', bounds.x);
+        rect.setAttribute('y', bounds.y);
+        rect.setAttribute('width', bounds.width);
+        rect.setAttribute('height', bounds.height);
+        clipPath.appendChild(rect);
+
+        // Apply clip to feature and decoration layers
+        document.getElementById('layer-features').setAttribute('clip-path', 'url(#log-clip)');
+        document.getElementById('layer-decorations').setAttribute('clip-path', 'url(#log-clip)');
     }
 
     renderFeatures(layer) {

@@ -135,28 +135,74 @@ export class TikiModel {
         return { left: b.x, right: b.x + b.width };
     }
 
-    // Check if feature exceeds log bounds and return overflow
-    getOverflow(featureName) {
+    // Hard containment: clamp a feature parameter so it cannot exceed log bounds.
+    // Returns the max allowed value for a width/spacing slider (0-100 scale)
+    // given the log width. Features CANNOT exceed the log — you can't add wood.
+    getMaxParam(featureName, paramName) {
         const b = this.svgBounds;
-        const bounds = this.getFeatureBounds(featureName);
-        return {
-            left: Math.max(0, b.x - bounds.left),
-            right: Math.max(0, bounds.right - (b.x + b.width))
-        };
+        const halfW = b.width / 2;
+
+        switch (featureName) {
+            case 'eyes': {
+                if (paramName === 'spacing') {
+                    // Max spacing = half log width minus eye size
+                    const eyeW = b.width * (0.12 + this.features.eyes.scale / 400);
+                    const maxSpacing = ((halfW - eyeW) / b.width - 0.15) * 200;
+                    return Math.max(20, Math.min(80, maxSpacing));
+                }
+                if (paramName === 'scale') {
+                    // Max eye size = can't exceed edge when combined with spacing
+                    const spacing = b.width * (0.15 + this.features.eyes.spacing / 200);
+                    const maxEyeW = halfW - spacing;
+                    const maxScale = ((maxEyeW / b.width) - 0.12) * 400;
+                    return Math.max(20, Math.min(100, maxScale));
+                }
+                break;
+            }
+            case 'nose': {
+                if (paramName === 'width') {
+                    // Nose can't exceed half the log width on each side
+                    const maxNoseW = halfW * 0.85;
+                    const maxParam = ((maxNoseW / b.width) - 0.1) * 200;
+                    return Math.max(20, Math.min(80, maxParam));
+                }
+                break;
+            }
+            case 'mouth': {
+                if (paramName === 'width') {
+                    // Mouth can't exceed log width
+                    const maxMouthW = halfW * 0.9;
+                    const maxParam = (maxMouthW / b.width) * 140;
+                    return Math.max(30, Math.min(90, maxParam));
+                }
+                break;
+            }
+        }
+        return 100;
     }
 
-    // Auto-expand log width if features overflow
-    getEffectiveWidth() {
-        let maxOverflow = 0;
-        ['eyes', 'nose', 'mouth'].forEach(f => {
-            const overflow = this.getOverflow(f);
-            maxOverflow = Math.max(maxOverflow, overflow.left, overflow.right);
-        });
-        if (maxOverflow > 0) {
-            const b = this.svgBounds;
-            return b.width + maxOverflow * 2 + 10;
+    // Enforce containment: clamp all feature params to fit within log
+    enforceContainment() {
+        // Clamp eye spacing
+        const maxEyeSpacing = this.getMaxParam('eyes', 'spacing');
+        if (this.features.eyes.spacing > maxEyeSpacing) {
+            this.features.eyes.spacing = maxEyeSpacing;
         }
-        return this.svgBounds.width;
+        // Clamp eye scale
+        const maxEyeScale = this.getMaxParam('eyes', 'scale');
+        if (this.features.eyes.scale > maxEyeScale) {
+            this.features.eyes.scale = maxEyeScale;
+        }
+        // Clamp nose width
+        const maxNoseW = this.getMaxParam('nose', 'width');
+        if (this.features.nose.width > maxNoseW) {
+            this.features.nose.width = maxNoseW;
+        }
+        // Clamp mouth width
+        const maxMouthW = this.getMaxParam('mouth', 'width');
+        if (this.features.mouth.width > maxMouthW) {
+            this.features.mouth.width = maxMouthW;
+        }
     }
 
     formatMeasurement(value) {

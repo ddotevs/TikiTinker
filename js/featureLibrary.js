@@ -32,41 +32,89 @@ export class FeatureLibrary {
     }
 
     // ─── SIDE PROFILE ───────────────────────────────────────────────────────────
+    // The side view shows the SAME width as front (it's a round log).
+    // The profile only cuts into the FRONT HALF (from front surface toward center).
+    // "front" = right edge of the bounding box. Cuts go leftward (into the log).
+    // The back half (left side) stays as the uncarved log wall.
     static sideProfile(bounds, model, stage) {
         const { x, y, width: w, height: h } = bounds;
-        const noseProj = w * (0.25 + model.features.nose.width / 250);
-        const browY = h * model.guides.browline;
-        const noseY = h * model.guides.noseline;
-        const mouthY = h * model.guides.mouthline;
-        const chinY = h * model.guides.chinline;
+
+        // Key positions (Y coordinates)
+        const browYpos = y + h * model.guides.browline;
+        const eyeYpos = y + h * model.guides.eyeline;
+        const noseYpos = y + h * model.guides.noseline;
+        const mouthYpos = y + h * model.guides.mouthline;
+        const chinYpos = y + h * model.guides.chinline;
+
+        // The front surface is at the right edge (x + w).
+        // Max carve depth = half the diameter (to center of log) = w/2
+        // Features project OUT from a "face plane" that sits slightly inside the front.
+        const front = x + w; // uncarved front surface
+        const center = x + w / 2; // center of log (max depth)
+
+        // Face plane: the general carved surface sits slightly inside front
+        const facePlane = front - w * 0.08;
+
+        // Depth of carved features (measured inward from front surface)
+        const noseWidth = model.features.nose.width;
+        const noseProj = w * (0.05 + noseWidth / 600); // nose sticks OUT from face plane
+        const browDepth = w * 0.06; // brow ridge projects slightly forward
+        const eyeDepth = w * 0.12; // eye sockets carved IN behind face plane
+        const mouthDepth = w * 0.10; // mouth opening carved IN
+        const chinDepth = w * 0.04;
+
+        // Back wall of the log (uncarved)
+        const back = x;
 
         if (stage === 1) {
-            // Blocky side profile — just the major cuts
-            return `M ${x + w * 0.2} ${y}
-                    L ${x + w * 0.8} ${y}
-                    L ${x + w * 0.8} ${y + browY}
-                    L ${x + w * 0.7} ${y + browY + h * 0.03}
-                    L ${x + w * 0.75 + noseProj * 0.6} ${y + noseY}
-                    L ${x + w * 0.65} ${y + noseY + h * 0.03}
-                    L ${x + w * 0.68} ${y + mouthY}
-                    L ${x + w * 0.6} ${y + chinY}
-                    L ${x + w * 0.55} ${y + h}
-                    L ${x + w * 0.2} ${y + h}
-                    Z`;
+            // Block-in: show the full log rectangle + major angular cuts
+            // The profile is just straight angular cuts into the front half
+            const paths = [];
+            // Full log outline
+            paths.push(`M ${back} ${y} L ${front} ${y} L ${front} ${y + h} L ${back} ${y + h} Z`);
+            // Rough profile cut (the waste to remove)
+            paths.push(`M ${front} ${y}
+                L ${front} ${browYpos}
+                L ${facePlane + browDepth} ${browYpos}
+                L ${facePlane - eyeDepth * 0.7} ${eyeYpos}
+                L ${facePlane + noseProj} ${noseYpos}
+                L ${facePlane - mouthDepth * 0.5} ${mouthYpos}
+                L ${facePlane - chinDepth} ${chinYpos}
+                L ${facePlane} ${y + h}
+                L ${front} ${y + h}
+                Z`);
+            return paths;
         }
 
-        // Stage 2+: smoother profile with brow overhang and nose projection
-        return `M ${x + w * 0.25} ${y}
-                L ${x + w * 0.75} ${y}
-                C ${x + w * 0.8} ${y + browY * 0.3} ${x + w * 0.82} ${y + browY * 0.7} ${x + w * 0.78} ${y + browY}
-                L ${x + w * 0.65} ${y + browY + h * 0.04}
-                C ${x + w * 0.63} ${y + browY + h * 0.06} ${x + w * 0.65 + noseProj * 0.3} ${y + noseY - h * 0.08} ${x + w * 0.6 + noseProj} ${y + noseY}
-                C ${x + w * 0.6 + noseProj * 0.8} ${y + noseY + h * 0.02} ${x + w * 0.6} ${y + noseY + h * 0.04} ${x + w * 0.58} ${y + noseY + h * 0.05}
-                C ${x + w * 0.6} ${y + mouthY - h * 0.02} ${x + w * 0.63} ${y + mouthY} ${x + w * 0.62} ${y + mouthY + h * 0.04}
-                C ${x + w * 0.58} ${y + mouthY + h * 0.06} ${x + w * 0.55} ${y + chinY - h * 0.03} ${x + w * 0.52} ${y + chinY}
-                L ${x + w * 0.48} ${y + h}
-                L ${x + w * 0.25} ${y + h}
-                Z`;
+        // Stage 2+: detailed profile curve
+        const paths = [];
+        // Log outline (back wall + top + bottom only — front is the carved profile)
+        paths.push(`M ${back} ${y} L ${front} ${y} L ${front} ${y + h} L ${back} ${y + h} Z`);
+
+        // Carved profile line (the interesting part)
+        paths.push(`M ${facePlane} ${y}
+            C ${facePlane + browDepth * 0.5} ${y + (browYpos - y) * 0.5}
+              ${facePlane + browDepth} ${browYpos - h * 0.02}
+              ${facePlane + browDepth} ${browYpos}
+            C ${facePlane + browDepth * 0.3} ${browYpos + h * 0.01}
+              ${facePlane - eyeDepth * 0.3} ${eyeYpos - h * 0.03}
+              ${facePlane - eyeDepth} ${eyeYpos}
+            C ${facePlane - eyeDepth * 0.5} ${eyeYpos + h * 0.02}
+              ${facePlane + noseProj * 0.5} ${noseYpos - h * 0.06}
+              ${facePlane + noseProj} ${noseYpos}
+            C ${facePlane + noseProj * 0.6} ${noseYpos + h * 0.015}
+              ${facePlane} ${noseYpos + h * 0.03}
+              ${facePlane - mouthDepth * 0.3} ${noseYpos + h * 0.05}
+            C ${facePlane - mouthDepth * 0.5} ${mouthYpos - h * 0.02}
+              ${facePlane - mouthDepth} ${mouthYpos - h * 0.01}
+              ${facePlane - mouthDepth} ${mouthYpos}
+            C ${facePlane - mouthDepth * 0.8} ${mouthYpos + h * 0.02}
+              ${facePlane - mouthDepth * 0.3} ${mouthYpos + h * 0.04}
+              ${facePlane - chinDepth * 0.5} ${chinYpos - h * 0.02}
+            C ${facePlane - chinDepth} ${chinYpos}
+              ${facePlane - chinDepth * 0.3} ${chinYpos + h * 0.03}
+              ${facePlane} ${y + h}`);
+        return paths;
     }
 
     // ─── BROW RIDGE ──────────────────────────────────────────────────────────────
