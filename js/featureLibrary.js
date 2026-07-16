@@ -36,6 +36,13 @@ export class FeatureLibrary {
     // The profile only cuts into the FRONT HALF (from front surface toward center).
     // "front" = right edge of the bounding box. Cuts go leftward (into the log).
     // The back half (left side) stays as the uncarved log wall.
+    //
+    // CRITICAL RULE: Each stage can ONLY remove more wood than the previous.
+    // Stage 1 = shallowest cuts (closest to front surface)
+    // Stage 2 = deeper cuts (further from front, refining shape)
+    // Stage 3 = deepest cuts (final surface with all detail)
+    // At every Y position, the profile must be EQUAL TO or FURTHER from the front
+    // as stage number increases.
     static sideProfile(bounds, model, stage) {
         const { x, y, width: w, height: h } = bounds;
 
@@ -48,72 +55,89 @@ export class FeatureLibrary {
 
         // The front surface is at the right edge (x + w).
         // Max carve depth = half the diameter (to center of log) = w/2
-        // Features project OUT from a "face plane" that sits slightly inside the front.
-        const front = x + w; // uncarved front surface
-        const center = x + w / 2; // center of log (max depth)
-
-        // Face plane: the general carved surface sits slightly inside front
-        const facePlane = front - w * 0.08;
-
-        // Depth of carved features (measured inward from front surface)
-        const noseWidth = model.features.nose.width;
-        const noseProj = w * (0.05 + noseWidth / 600); // nose sticks OUT from face plane
-        const browDepth = w * 0.06; // brow ridge projects slightly forward
-        const eyeDepth = w * 0.12; // eye sockets carved IN behind face plane
-        const mouthDepth = w * 0.10; // mouth opening carved IN
-        const chinDepth = w * 0.04;
-
-        // Back wall of the log (uncarved)
+        const front = x + w;
         const back = x;
 
-        if (stage === 1) {
-            // Block-in: show the full log rectangle + major angular cuts
-            // The profile is just straight angular cuts into the front half
-            const paths = [];
-            // Full log outline
-            paths.push(`M ${back} ${y} L ${front} ${y} L ${front} ${y + h} L ${back} ${y + h} Z`);
-            // Rough profile cut (the waste to remove)
-            paths.push(`M ${front} ${y}
-                L ${front} ${browYpos}
-                L ${facePlane + browDepth} ${browYpos}
-                L ${facePlane - eyeDepth * 0.7} ${eyeYpos}
-                L ${facePlane + noseProj} ${noseYpos}
-                L ${facePlane - mouthDepth * 0.5} ${mouthYpos}
-                L ${facePlane - chinDepth} ${chinYpos}
-                L ${facePlane} ${y + h}
-                L ${front} ${y + h}
-                Z`);
-            return paths;
-        }
+        // Face plane: general carved surface (where flat areas end up)
+        const facePlane = front - w * 0.08;
 
-        // Stage 2+: detailed profile curve
+        // Depth values PER STAGE — each stage goes deeper (further left/into log)
+        // Stage 1: conservative shallow cuts — just the major planes
+        // Stage 2: moderate depth — features take shape
+        // Stage 3: deepest — final carved surface
+        const depths = {
+            1: {
+                brow: w * 0.03,      // brow barely projects
+                eye: w * 0.05,       // shallow eye socket
+                noseProj: w * 0.04,  // nose barely sticks out
+                mouth: w * 0.04,     // shallow mouth cut
+                chin: w * 0.02       // minimal chin
+            },
+            2: {
+                brow: w * 0.05,
+                eye: w * 0.10,
+                noseProj: w * (0.04 + model.features.nose.width / 800),
+                mouth: w * 0.08,
+                chin: w * 0.03
+            },
+            3: {
+                brow: w * 0.06,
+                eye: w * 0.12,
+                noseProj: w * (0.05 + model.features.nose.width / 600),
+                mouth: w * 0.10,
+                chin: w * 0.04
+            }
+        };
+
+        const d = depths[stage];
+
+        // Profile points (X position at each feature height)
+        // Higher X = closer to front surface = less wood removed
+        // Lower X = deeper into log = more wood removed
+        const browX = facePlane + d.brow;     // brow projects forward
+        const eyeX = facePlane - d.eye;       // eye sockets are carved IN
+        const noseX = facePlane + d.noseProj; // nose projects forward (most forward point)
+        const mouthX = facePlane - d.mouth;   // mouth carved IN
+        const chinX = facePlane - d.chin;     // chin slightly recessed
+
         const paths = [];
-        // Log outline (back wall + top + bottom only — front is the carved profile)
+
+        // Full log outline (always present)
         paths.push(`M ${back} ${y} L ${front} ${y} L ${front} ${y + h} L ${back} ${y + h} Z`);
 
-        // Carved profile line (the interesting part)
-        paths.push(`M ${facePlane} ${y}
-            C ${facePlane + browDepth * 0.5} ${y + (browYpos - y) * 0.5}
-              ${facePlane + browDepth} ${browYpos - h * 0.02}
-              ${facePlane + browDepth} ${browYpos}
-            C ${facePlane + browDepth * 0.3} ${browYpos + h * 0.01}
-              ${facePlane - eyeDepth * 0.3} ${eyeYpos - h * 0.03}
-              ${facePlane - eyeDepth} ${eyeYpos}
-            C ${facePlane - eyeDepth * 0.5} ${eyeYpos + h * 0.02}
-              ${facePlane + noseProj * 0.5} ${noseYpos - h * 0.06}
-              ${facePlane + noseProj} ${noseYpos}
-            C ${facePlane + noseProj * 0.6} ${noseYpos + h * 0.015}
-              ${facePlane} ${noseYpos + h * 0.03}
-              ${facePlane - mouthDepth * 0.3} ${noseYpos + h * 0.05}
-            C ${facePlane - mouthDepth * 0.5} ${mouthYpos - h * 0.02}
-              ${facePlane - mouthDepth} ${mouthYpos - h * 0.01}
-              ${facePlane - mouthDepth} ${mouthYpos}
-            C ${facePlane - mouthDepth * 0.8} ${mouthYpos + h * 0.02}
-              ${facePlane - mouthDepth * 0.3} ${mouthYpos + h * 0.04}
-              ${facePlane - chinDepth * 0.5} ${chinYpos - h * 0.02}
-            C ${facePlane - chinDepth} ${chinYpos}
-              ${facePlane - chinDepth * 0.3} ${chinYpos + h * 0.03}
-              ${facePlane} ${y + h}`);
+        if (stage === 1) {
+            // Block-in: angular straight-line cuts (the first bandsaw/rough cuts)
+            paths.push(`M ${facePlane} ${y}
+                L ${browX} ${browYpos}
+                L ${eyeX} ${eyeYpos}
+                L ${noseX} ${noseYpos}
+                L ${mouthX} ${mouthYpos}
+                L ${chinX} ${chinYpos}
+                L ${facePlane} ${y + h}`);
+        } else {
+            // Stage 2+: smooth curves between the same control points
+            // The curves go AT LEAST as deep as the angular Stage 1 cuts at every point
+            paths.push(`M ${facePlane} ${y}
+                C ${facePlane} ${y + (browYpos - y) * 0.5}
+                  ${browX} ${browYpos - h * 0.02}
+                  ${browX} ${browYpos}
+                C ${browX - d.brow * 0.5} ${browYpos + (eyeYpos - browYpos) * 0.3}
+                  ${eyeX + d.eye * 0.3} ${eyeYpos - (eyeYpos - browYpos) * 0.2}
+                  ${eyeX} ${eyeYpos}
+                C ${eyeX} ${eyeYpos + (noseYpos - eyeYpos) * 0.2}
+                  ${noseX - d.noseProj * 0.5} ${noseYpos - (noseYpos - eyeYpos) * 0.3}
+                  ${noseX} ${noseYpos}
+                C ${noseX - d.noseProj * 0.3} ${noseYpos + h * 0.02}
+                  ${facePlane - d.mouth * 0.3} ${noseYpos + (mouthYpos - noseYpos) * 0.4}
+                  ${mouthX} ${mouthYpos}
+                C ${mouthX + d.mouth * 0.3} ${mouthYpos + (chinYpos - mouthYpos) * 0.4}
+                  ${chinX - d.chin * 0.2} ${chinYpos - (chinYpos - mouthYpos) * 0.2}
+                  ${chinX} ${chinYpos}
+                C ${chinX + d.chin * 0.3} ${chinYpos + (y + h - chinYpos) * 0.4}
+                  ${facePlane} ${y + h - h * 0.02}
+                  ${facePlane} ${y + h}`);
+        }
+
         return paths;
     }
 

@@ -1,3 +1,29 @@
+Dev Notes:
+Drag and drop the features with height
+Features do not look like they are defaulted to center.  Specifically the nostrils.
+Confine all features to be within the log.  If they are not, shape the log to accommodate space, skin outside the feature that is overlapping.  
+Default should be a straight line for the front view / Side angle 
+The features are not quite as detailed as I had hoped with the rendering.  Is there a way to take into account the amount of space that a feature change is going to effect other features
+Also, would love for you to scrape the internet for cartoony features that can be pre baked like the example in this image I shared https://i.etsystatic.com/60670896/r/il/6b43a8/7069001934/il_1588xN.7069001934_1gos.jpg 
+
+That looks much better.  You can keep finding new and cool design ideas to 
+  incorperate them.  I do like the click and drag interface and how it is 
+  affecting the other features.  Maybe you could add more of that around like 
+  nose height and Decrotive filler designs.  The BIG issue that I see is that 
+  the ratios are very off with the side view.  It looks like there is a REALLY 
+  long nose, but the original rough out for the mouth is basically non existant.
+    The side view should also be the same width as the front view since it is a 
+  round log, but presomably the side view will just only be cutting into half of
+   the log itself
+
+   I talked about the features not going outside of the log.  It can NEVER exceed
+   the FULL size of the log as you can't add wood when you are carving, only 
+  take away.  Make sure those features are contained and in default proportion 
+  to the entered log size.
+
+
+Print all 3 stages on all 3 views with one click. 
+
 I've recently gotten into a woodcarving hobby.  The best thing that I've found to learn is Tiki Faces and Totem Poles.  We're going to focus on just Tiki Faces for now as we can limit it to facial features.  THe problem I'm facing is not having the correct dimenstions  for sketching an idea on graph paper and making it translate well to a grid on a round piece of wood, and getting the mathematical facial propotions correct. Here is a good diagram https://centreforsurgery-com-2.nimbus-cdn.uk/wp-content/uploads/2026/07/golden-ratio-phi-1618-diagram-centre-for-surgery-london.png.webp?format=webp&nv=e6e9aa24-efad-4556-87cf-921fc5938fa2
 
 Additionally.  With carving, you need to get rid of the larger pieces first, which when doing a face, that is most of the time the Side view, I would need to have at least side and front views as an option to rotate.  Another feature would be to have stages of the carving.  Full round log > Initial rough out > Details look. This would have Angular Black areas that are removable within the SVG Think 16-bit render > 32-bit render > 64-bit render in the 3 stages. 
@@ -19,3 +45,6 @@ However, in leiu of chin details I would love for you to scrape the internet for
 Feel free to also do some web searches on your own to get a better idea as well as maybe some cool things to incorporate in our applications.
 
 Technically I would like to have this as a web app and I'm most comfortable with HTML javascript css.  We'll eventually be hosting this on my docker container, but hold off on this step for a bit as my docker is not running, you can just deploy locally for now. 
+
+
+
