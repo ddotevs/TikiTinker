@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikiTinker</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header class="toolbar">
+        <h1 class="logo">TikiTinker</h1>
+        <div class="toolbar-controls">
+            <button id="btn-grid" class="tool-btn" title="Toggle Grid">Grid</button>
+            <button id="btn-guides" class="tool-btn active" title="Toggle Guidelines">Guides</button>
+            <button id="btn-ratio" class="tool-btn" title="Toggle Golden Ratio Overlay">&#966; Ratio</button>
+            <div class="stage-selector">
+                <button class="stage-btn active" data-stage="1" title="Block-in">1</button>
+                <button class="stage-btn" data-stage="2" title="Rough-out">2</button>
+                <button class="stage-btn" data-stage="3" title="Detail">3</button>
+            </div>
+            <button id="btn-export" class="tool-btn" title="Export SVG">Export</button>
+        </div>
+    </header>
+
+    <main class="workspace">
+        <!-- Left Panel: Controls -->
+        <aside class="panel panel-left">
+            <section class="panel-section">
+                <h3>Log Blank</h3>
+                <label>Diameter
+                    <div class="input-group">
+                        <input type="number" id="log-diameter" value="4" min="1" max="24" step="0.25">
+                        <select id="unit-select">
+                            <option value="in">in</option>
+                            <option value="cm">cm</option>
+                        </select>
+                    </div>
+                </label>
+                <label>Carving Height
+                    <input type="number" id="log-height" value="8" min="1" max="48" step="0.25">
+                </label>
+            </section>
+
+            <section class="panel-section">
+                <h3>Features</h3>
+                <label>Eyes
+                    <select id="feat-eyes">
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                        <option value="squinting">Squinting</option>
+                        <option value="round">Round</option>
+                        <option value="square">Square</option>
+                    </select>
+                </label>
+                <div class="sub-controls" id="eyes-params">
+                    <label>Pupil Size <input type="range" id="eyes-pupil" min="0" max="100" value="50"></label>
+                    <label>Angle <input type="range" id="eyes-angle" min="-30" max="30" value="0"></label>
+                    <label>Spacing <input type="range" id="eyes-spacing" min="20" max="80" value="50"></label>
+                </div>
+
+                <label>Eyebrows
+                    <select id="feat-brows">
+                        <option value="angry">Angry</option>
+                        <option value="laughing">Laughing</option>
+                        <option value="sad">Sad</option>
+                        <option value="none">None</option>
+                    </select>
+                </label>
+                <div class="sub-controls" id="brows-params">
+                    <label>Thickness <input type="range" id="brows-thickness" min="10" max="100" value="50"></label>
+                </div>
+
+                <label>Nose
+                    <select id="feat-nose">
+                        <option value="round">Round</option>
+                        <option value="blocky">Blocky</option>
+                    </select>
+                </label>
+                <div class="sub-controls" id="nose-params">
+                    <label>Width <input type="range" id="nose-width" min="20" max="80" value="50"></label>
+                    <label>Nostril Size <input type="range" id="nose-nostril" min="10" max="80" value="40"></label>
+                    <label>Lip Distance <input type="range" id="nose-lip-dist" min="10" max="60" value="30"></label>
+                </div>
+
+                <label>Mouth
+                    <select id="feat-mouth">
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                        <option value="smiling">Smiling</option>
+                        <option value="frowning">Frowning</option>
+                    </select>
+                </label>
+                <div class="sub-controls" id="mouth-params">
+                    <label>Width <input type="range" id="mouth-width" min="30" max="90" value="60"></label>
+                </div>
+
+                <label>Teeth
+                    <select id="feat-teeth">
+                        <option value="none">None</option>
+                        <option value="normal">Normal</option>
+                        <option value="buck">Buck Toothed</option>
+                        <option value="deep">Deep Mouth</option>
+                        <option value="setback">Set Back</option>
+                    </select>
+                </label>
+                <div class="sub-controls" id="teeth-params">
+                    <label>Tooth Size <input type="range" id="teeth-size" min="20" max="100" value="50"></label>
+                </div>
+
+                <label>Tongue
+                    <select id="feat-tongue">
+                        <option value="none">None</option>
+                        <option value="slight">Slight</option>
+                        <option value="out">Sticking Out</option>
+                    </select>
+                </label>
+                <div class="sub-controls" id="tongue-params">
+                    <label>Direction
+                        <select id="tongue-dir">
+                            <option value="center">Center</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                            <option value="up">Up</option>
+                        </select>
+                    </label>
+                    <label>Shape
+                        <select id="tongue-shape">
+                            <option value="round">Round</option>
+                            <option value="sharp">Sharp</option>
+                            <option value="snake">Snake</option>
+                        </select>
+                    </label>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>Decorations</h3>
+                <label>Crown Pattern
+                    <select id="deco-crown">
+                        <option value="none">None</option>
+                        <option value="radiating">Radiating Lines</option>
+                        <option value="fan">Fan/Sunburst</option>
+                        <option value="chevron">Chevrons</option>
+                        <option value="crosshatch">Crosshatch</option>
+                    </select>
+                </label>
+                <label>Filler Pattern
+                    <select id="deco-filler">
+                        <option value="none">None</option>
+                        <option value="zigzag">Zigzag</option>
+                        <option value="spirals">Spirals</option>
+                        <option value="concentric">Concentric Circles</option>
+                        <option value="woodgrain">Wood Grain Lines</option>
+                    </select>
+                </label>
+            </section>
+        </aside>
+
+        <!-- Center: SVG Canvas -->
+        <div class="canvas-area">
+            <div class="view-tabs">
+                <button class="view-btn active" data-view="front">Front</button>
+                <button class="view-btn" data-view="side">Side</button>
+            </div>
+            <div class="svg-container" id="svg-container">
+                <svg id="tiki-canvas" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid meet">
+                    <!-- Layers rendered by JS -->
+                    <g id="layer-grid"></g>
+                    <g id="layer-guidelines"></g>
+                    <g id="layer-ratio"></g>
+                    <g id="layer-face"></g>
+                    <g id="layer-features"></g>
+                    <g id="layer-decorations"></g>
+                    <g id="layer-measurements"></g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Right Panel: Measurements -->
+        <aside class="panel panel-right">
+            <section class="panel-section">
+                <h3>Log Dimensions</h3>
+                <div class="measurement-row">
+                    <span class="meas-label">Diameter</span>
+                    <span class="meas-value" id="meas-diameter">4"</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Circumference</span>
+                    <span class="meas-value" id="meas-circumference">12.57"</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Radius</span>
+                    <span class="meas-value" id="meas-radius">2"</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Height</span>
+                    <span class="meas-value" id="meas-height">8"</span>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>Feature Placement</h3>
+                <div class="measurement-row">
+                    <span class="meas-label">Eye center</span>
+                    <span class="meas-value" id="meas-eyeline">--</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Nose base</span>
+                    <span class="meas-value" id="meas-noseline">--</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Mouth center</span>
+                    <span class="meas-value" id="meas-mouthline">--</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Chin</span>
+                    <span class="meas-value" id="meas-chinline">--</span>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>Grid Info</h3>
+                <div class="measurement-row">
+                    <span class="meas-label">Grid squares</span>
+                    <span class="meas-value" id="meas-grid-squares">--</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Square size</span>
+                    <span class="meas-value" id="meas-grid-size">--</span>
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <h3>&#966; Golden Ratio</h3>
+                <div class="measurement-row">
+                    <span class="meas-label">Crown to Eye</span>
+                    <span class="meas-value" id="meas-ratio-eye">--</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Eye to Nose</span>
+                    <span class="meas-value" id="meas-ratio-nose">--</span>
+                </div>
+                <div class="measurement-row">
+                    <span class="meas-label">Nose to Chin</span>
+                    <span class="meas-value" id="meas-ratio-chin">--</span>
+                </div>
+            </section>
+        </aside>
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

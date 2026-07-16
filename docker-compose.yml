@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  tikitinker:
+    build: .
+    container_name: tikitinker
+    ports:
+      - "8085:80"
+    restart: unless-stopped
