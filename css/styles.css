@@ -371,3 +371,37 @@ input[type="range"]::-webkit-slider-thumb {
     stroke-width: 1;
     stroke-linecap: round;
 }
+
+/* Drag handles */
+.drag-handle {
+    transition: opacity 0.15s;
+}
+
+.drag-handle:hover .handle-diamond,
+.drag-handle.dragging .handle-diamond {
+    fill: var(--accent);
+    stroke: var(--accent);
+}
+
+.handle-diamond {
+    fill: rgba(233, 69, 96, 0.5);
+    stroke: var(--accent);
+    stroke-width: 1;
+    transition: fill 0.15s;
+}
+
+.handle-label {
+    font-size: 7px;
+    font-family: monospace;
+    fill: rgba(233, 69, 96, 0.6);
+    pointer-events: none;
+}
+
+.drag-handle:hover .handle-label {
+    fill: var(--accent);
+}
+
+#tiki-canvas {
+    user-select: none;
+    -webkit-user-select: none;
+}

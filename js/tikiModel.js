@@ -1,5 +1,5 @@
 // TikiModel - Parametric face data model
-// Manages proportions, feature selections, and dimensions
+// Manages proportions, feature selections, dimensions, and feature interaction
 
 const PHI = 1.618;
 
@@ -12,38 +12,42 @@ export class TikiModel {
         };
 
         // Guideline positions as fractions of total height (0 = top, 1 = bottom)
-        // Default positions inspired by golden ratio but freely adjustable
+        // These are DRAGGABLE - user can reposition features freely
         this.guides = {
             crownTop: 0.0,
-            eyeline: 0.35,
+            browline: 0.28,
+            eyeline: 0.38,
             noseline: 0.55,
-            mouthline: 0.70,
-            chinline: 0.88,
+            mouthline: 0.72,
+            chinline: 0.90,
             bottom: 1.0
         };
 
         this.features = {
-            eyes: { type: 'open', pupil: 50, angle: 0, spacing: 50 },
-            brows: { type: 'angry', thickness: 50 },
-            nose: { type: 'round', width: 50, nostril: 40, lipDist: 30 },
-            mouth: { type: 'open', width: 60 },
-            teeth: { type: 'none', size: 50 },
+            eyes: { type: 'tiki-almond', pupil: 50, angle: 0, spacing: 50, scale: 50 },
+            brows: { type: 'angry', thickness: 60, connected: true },
+            nose: { type: 'tiki-wide', width: 50, nostril: 50, lipDist: 30, scale: 50 },
+            mouth: { type: 'open', width: 60, scale: 50 },
+            teeth: { type: 'normal', size: 50, count: 6 },
             tongue: { type: 'none', direction: 'center', shape: 'round' }
         };
 
         this.decorations = {
-            crown: 'none',
+            crown: 'radiating',
             filler: 'none'
         };
 
         this.view = 'front'; // 'front' or 'side'
-        this.stage = 1; // 1, 2, or 3
+        this.stage = 3; // 1, 2, or 3 — default to detail view
 
         this.overlays = {
             grid: false,
             guides: true,
             ratio: false
         };
+
+        // Drag state
+        this.dragging = null; // which guide is being dragged
     }
 
     get circumference() {
@@ -54,8 +58,6 @@ export class TikiModel {
         return this.log.diameter / 2;
     }
 
-    // Get the face width (visible from front on a cylinder)
-    // On a round log, the visible front face is roughly diameter-wide
     get faceWidth() {
         return this.log.diameter;
     }
@@ -64,10 +66,9 @@ export class TikiModel {
         return this.log.height;
     }
 
-    // Convert model proportions to SVG coordinates
-    // SVG viewBox is 400x600; face is centered within
+    // SVG coordinate mapping — face fills most of the viewBox
     get svgBounds() {
-        const padding = 30;
+        const padding = 40;
         const aspect = this.faceWidth / this.faceHeight;
         let svgW, svgH;
 
@@ -87,30 +88,83 @@ export class TikiModel {
         };
     }
 
-    // Convert a fraction (0-1) of height to SVG Y coordinate
     fracToY(frac) {
         const b = this.svgBounds;
         return b.y + frac * b.height;
     }
 
-    // Convert a fraction (0-1) of width to SVG X coordinate (0.5 = center)
     fracToX(frac) {
         const b = this.svgBounds;
         return b.x + frac * b.width;
     }
 
-    // Get measurement value with unit suffix
-    formatMeasurement(value) {
-        const unit = this.log.unit;
-        if (unit === 'cm') {
-            return `${value.toFixed(1)} cm`;
-        }
-        return `${value.toFixed(2)}"`;
+    yToFrac(y) {
+        const b = this.svgBounds;
+        return (y - b.y) / b.height;
     }
 
-    // Get the golden ratio guide positions (for reference only)
+    // Clamp a guide fraction to valid range, respecting ordering
+    clampGuide(name, frac) {
+        const order = ['crownTop', 'browline', 'eyeline', 'noseline', 'mouthline', 'chinline', 'bottom'];
+        const idx = order.indexOf(name);
+        const min = idx > 0 ? this.guides[order[idx - 1]] + 0.03 : 0;
+        const max = idx < order.length - 1 ? this.guides[order[idx + 1]] - 0.03 : 1;
+        return Math.max(min, Math.min(max, frac));
+    }
+
+    // Get feature bounds for containment checking
+    getFeatureBounds(featureName) {
+        const b = this.svgBounds;
+        const cx = b.x + b.width / 2;
+
+        switch (featureName) {
+            case 'eyes': {
+                const spacing = b.width * (0.15 + this.features.eyes.spacing / 200);
+                const eyeW = b.width * (0.12 + this.features.eyes.scale / 400);
+                return { left: cx - spacing - eyeW, right: cx + spacing + eyeW };
+            }
+            case 'nose': {
+                const noseW = b.width * (0.1 + this.features.nose.width / 200);
+                return { left: cx - noseW, right: cx + noseW };
+            }
+            case 'mouth': {
+                const mouthW = b.width * (this.features.mouth.width / 140);
+                return { left: cx - mouthW, right: cx + mouthW };
+            }
+        }
+        return { left: b.x, right: b.x + b.width };
+    }
+
+    // Check if feature exceeds log bounds and return overflow
+    getOverflow(featureName) {
+        const b = this.svgBounds;
+        const bounds = this.getFeatureBounds(featureName);
+        return {
+            left: Math.max(0, b.x - bounds.left),
+            right: Math.max(0, bounds.right - (b.x + b.width))
+        };
+    }
+
+    // Auto-expand log width if features overflow
+    getEffectiveWidth() {
+        let maxOverflow = 0;
+        ['eyes', 'nose', 'mouth'].forEach(f => {
+            const overflow = this.getOverflow(f);
+            maxOverflow = Math.max(maxOverflow, overflow.left, overflow.right);
+        });
+        if (maxOverflow > 0) {
+            const b = this.svgBounds;
+            return b.width + maxOverflow * 2 + 10;
+        }
+        return this.svgBounds.width;
+    }
+
+    formatMeasurement(value) {
+        const unit = this.log.unit;
+        return unit === 'cm' ? `${value.toFixed(1)} cm` : `${value.toFixed(2)}"`;
+    }
+
     getGoldenRatioGuides() {
-        // Classic facial thirds using phi
         const total = 1.0;
         const unit = total / (1 + PHI + PHI * PHI);
         return {
@@ -120,7 +174,6 @@ export class TikiModel {
         };
     }
 
-    // Get real-world measurements for each zone
     getZoneMeasurements() {
         const h = this.faceHeight;
         return {
@@ -132,7 +185,6 @@ export class TikiModel {
         };
     }
 
-    // Grid calculations
     getGridInfo() {
         const sqSize = this.log.diameter <= 4 ? 0.25 :
                        this.log.diameter <= 8 ? 0.5 : 1.0;
@@ -141,7 +193,6 @@ export class TikiModel {
         return { cols, rows, sqSize };
     }
 
-    // Serialize model to JSON for save/load
     toJSON() {
         return JSON.stringify({
             log: this.log,

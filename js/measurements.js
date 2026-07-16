@@ -18,6 +18,7 @@ export class Measurements {
 
         // Feature placement (distance from top)
         const h = m.faceHeight;
+        this._set('meas-browline', this._fmt(m.guides.browline * h) + suffix);
         this._set('meas-eyeline', this._fmt(m.guides.eyeline * h) + suffix);
         this._set('meas-noseline', this._fmt(m.guides.noseline * h) + suffix);
         this._set('meas-mouthline', this._fmt(m.guides.mouthline * h) + suffix);

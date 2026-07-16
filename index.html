@@ -14,9 +14,9 @@
             <button id="btn-guides" class="tool-btn active" title="Toggle Guidelines">Guides</button>
             <button id="btn-ratio" class="tool-btn" title="Toggle Golden Ratio Overlay">&#966; Ratio</button>
             <div class="stage-selector">
-                <button class="stage-btn active" data-stage="1" title="Block-in">1</button>
+                <button class="stage-btn" data-stage="1" title="Block-in">1</button>
                 <button class="stage-btn" data-stage="2" title="Rough-out">2</button>
-                <button class="stage-btn" data-stage="3" title="Detail">3</button>
+                <button class="stage-btn active" data-stage="3" title="Detail">3</button>
             </div>
             <button id="btn-export" class="tool-btn" title="Export SVG">Export</button>
         </div>
@@ -45,14 +45,16 @@
                 <h3>Features</h3>
                 <label>Eyes
                     <select id="feat-eyes">
-                        <option value="open">Open</option>
+                        <option value="tiki-almond" selected>Tiki Almond</option>
+                        <option value="open">Open Wide</option>
                         <option value="closed">Closed</option>
                         <option value="squinting">Squinting</option>
                         <option value="round">Round</option>
-                        <option value="square">Square</option>
+                        <option value="square">Diamond</option>
                     </select>
                 </label>
                 <div class="sub-controls" id="eyes-params">
+                    <label>Size <input type="range" id="eyes-scale" min="20" max="100" value="50"></label>
                     <label>Pupil Size <input type="range" id="eyes-pupil" min="0" max="100" value="50"></label>
                     <label>Angle <input type="range" id="eyes-angle" min="-30" max="30" value="0"></label>
                     <label>Spacing <input type="range" id="eyes-spacing" min="20" max="80" value="50"></label>
@@ -72,14 +74,15 @@
 
                 <label>Nose
                     <select id="feat-nose">
+                        <option value="tiki-wide" selected>Tiki Wide</option>
                         <option value="round">Round</option>
                         <option value="blocky">Blocky</option>
                     </select>
                 </label>
                 <div class="sub-controls" id="nose-params">
+                    <label>Size <input type="range" id="nose-scale" min="20" max="100" value="50"></label>
                     <label>Width <input type="range" id="nose-width" min="20" max="80" value="50"></label>
-                    <label>Nostril Size <input type="range" id="nose-nostril" min="10" max="80" value="40"></label>
-                    <label>Lip Distance <input type="range" id="nose-lip-dist" min="10" max="60" value="30"></label>
+                    <label>Nostril Size <input type="range" id="nose-nostril" min="10" max="80" value="50"></label>
                 </div>
 
                 <label>Mouth
@@ -91,6 +94,7 @@
                     </select>
                 </label>
                 <div class="sub-controls" id="mouth-params">
+                    <label>Size <input type="range" id="mouth-scale" min="20" max="100" value="50"></label>
                     <label>Width <input type="range" id="mouth-width" min="30" max="90" value="60"></label>
                 </div>
 
@@ -200,6 +204,11 @@
 
             <section class="panel-section">
                 <h3>Feature Placement</h3>
+                <p style="font-size:10px;color:var(--text-muted);margin-bottom:8px;">Drag guides on canvas to reposition</p>
+                <div class="measurement-row">
+                    <span class="meas-label">Brow ridge</span>
+                    <span class="meas-value" id="meas-browline">--</span>
+                </div>
                 <div class="measurement-row">
                     <span class="meas-label">Eye center</span>
                     <span class="meas-value" id="meas-eyeline">--</span>

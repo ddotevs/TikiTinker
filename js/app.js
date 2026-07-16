@@ -4,6 +4,7 @@ import { TikiModel } from './tikiModel.js';
 import { SvgRenderer } from './svgRenderer.js';
 import { Guidelines } from './guidelines.js';
 import { Measurements } from './measurements.js';
+import { DragDrop } from './dragDrop.js';
 
 class TikiTinkerApp {
     constructor() {
@@ -11,6 +12,7 @@ class TikiTinkerApp {
         this.renderer = new SvgRenderer(this.model);
         this.guidelines = new Guidelines(this.model);
         this.measurements = new Measurements(this.model);
+        this.dragDrop = new DragDrop(this.model, () => this.render());
 
         this.layers = {
             grid: document.getElementById('layer-grid'),
@@ -21,6 +23,9 @@ class TikiTinkerApp {
             decorations: document.getElementById('layer-decorations'),
             measurements: document.getElementById('layer-measurements')
         };
+
+        const svg = document.getElementById('tiki-canvas');
+        this.dragDrop.init(svg);
 
         this._bindControls();
         this.render();
@@ -33,6 +38,7 @@ class TikiTinkerApp {
         this.renderer.renderFace(this.layers.face);
         this.renderer.renderFeatures(this.layers.features);
         this.renderer.renderDecorations(this.layers.decorations);
+        this.dragDrop.renderHandles();
         this.measurements.updateDisplay();
     }
 
@@ -54,11 +60,13 @@ class TikiTinkerApp {
         this._onRange('eyes-pupil', v => { this.model.features.eyes.pupil = v; });
         this._onRange('eyes-angle', v => { this.model.features.eyes.angle = v; });
         this._onRange('eyes-spacing', v => { this.model.features.eyes.spacing = v; });
+        this._onRange('eyes-scale', v => { this.model.features.eyes.scale = v; });
         this._onRange('brows-thickness', v => { this.model.features.brows.thickness = v; });
         this._onRange('nose-width', v => { this.model.features.nose.width = v; });
         this._onRange('nose-nostril', v => { this.model.features.nose.nostril = v; });
-        this._onRange('nose-lip-dist', v => { this.model.features.nose.lipDist = v; });
+        this._onRange('nose-scale', v => { this.model.features.nose.scale = v; });
         this._onRange('mouth-width', v => { this.model.features.mouth.width = v; });
+        this._onRange('mouth-scale', v => { this.model.features.mouth.scale = v; });
         this._onRange('teeth-size', v => { this.model.features.teeth.size = v; });
 
         // Tongue params
@@ -107,7 +115,6 @@ class TikiTinkerApp {
             setter(el.value);
             this.render();
         });
-        // Also listen for input on number fields for immediate feedback
         if (el.type === 'number') {
             el.addEventListener('input', () => {
                 setter(el.value);
@@ -137,6 +144,11 @@ class TikiTinkerApp {
 
     _exportSVG() {
         const svg = document.getElementById('tiki-canvas');
+        // Remove drag handles from export
+        const handles = svg.querySelector('#layer-handles');
+        const handlesCopy = handles.innerHTML;
+        handles.innerHTML = '';
+
         const svgData = new XMLSerializer().serializeToString(svg);
         const blob = new Blob([svgData], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
@@ -146,10 +158,11 @@ class TikiTinkerApp {
         a.download = `tikitinker-${this.model.view}-stage${this.model.stage}.svg`;
         a.click();
         URL.revokeObjectURL(url);
+
+        handles.innerHTML = handlesCopy;
     }
 }
 
-// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new TikiTinkerApp();
 });
